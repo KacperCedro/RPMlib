@@ -1,2 +1,2 @@
-# RPMlib
-Library for calculations using RPM in C#
+# RPNlib
+Library for calculations using RPN in C#
