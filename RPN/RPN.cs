@@ -1,13 +1,28 @@
 ﻿using RPN.Classes;
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 
 namespace RPN
 {
+    /*
+     *        12+2×(3×4+10/5)
+     *        
+     *        12 2 3 4 × 10 5 / + × +
+     *        
+     *        40
+     */
     public class RPN
     {
-        public static string InfixToPostfix(string calculation)
+        public static List<string> SplitToList(string tokenString, Dictionary<char, Operator> dictionaryOfOperators)
         {
-            List<string> listOfTokens = SplitTokens.SplitToList(calculation, DictionaryOfOperators.dictionary);
+            List<string> tokens = new List<string>();
+            string pattern = @"([+\-*/()^])|\b\d+(\.\d+)?\b";
+            var matches = Regex.Matches(tokenString, pattern);
+            tokens = matches.Cast<Match>().Select(match => match.Value).ToList();
+            return tokens;
+        }
+        public static string InfixToPostfix(List<string> listOfTokens)
+        {
             string postfix = string.Empty;
             Stack<string> stack = new Stack<string>();
             Queue<string> queueOut = new Queue<string>();
@@ -78,13 +93,12 @@ namespace RPN
 
             return postfix;
         }
-        public static string PostfixToResult(string postfix)
+        public static string PostfixToResult(List<string> postfix)
         {
             string result = string.Empty;
             Stack<double> stack = new Stack<double>();
 
-            List<string> list = postfix.Split(' ').ToList();
-            foreach (var token in list)
+            foreach (var token in postfix)
             {
                 if (double.TryParse(token, out double tmpNumber))
                 {
@@ -111,7 +125,7 @@ namespace RPN
                                 stack.Push(a / b);
                                 break;
                             case '^':
-                                stack.Push(Math.Pow(a , b));
+                                stack.Push(Math.Pow(a, b));
                                 break;
                             default:
                                 break;

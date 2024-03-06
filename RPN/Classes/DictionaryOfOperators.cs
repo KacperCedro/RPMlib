@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RPN.Classes
 {
-    internal class DictionaryOfOperators
+    public class DictionaryOfOperators
     {
         public static Dictionary<char, Operator> dictionary = new Dictionary<char, Operator>()
         {

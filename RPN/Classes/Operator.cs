@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RPN.Classes
 {
-    internal class Operator
+    public class Operator
     {
         public char Sign { get; set; }
         public OperatorType TypeOfOperation { get; set; }
