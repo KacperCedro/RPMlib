@@ -1,6 +1,7 @@
 ﻿using RPN.Classes;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks.Dataflow;
 
 namespace RPN
 {
@@ -13,37 +14,45 @@ namespace RPN
      */
     public class RPN
     {
-        public static List<string> SplitToList(string tokenString, Dictionary<char, Operator> dictionaryOfOperators)
+        public static List<string> SplitToListUsingSpaceBar(string tokenString)
         {
             List<string> tokens = new List<string>();
-            string pattern = @"([+\-*/()^])|\b\d+(\.\d+)?\b";
+
+            tokens = tokenString.Split(" ", StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            return tokens;
+        }
+        public static List<string> SplitToListUsingRegex(string tokenString)
+        {
+            List<string> tokens = new List<string>();
+            string pattern = @"([+\-*/()^])|\b\d+(\,\d+)?\b";
             var matches = Regex.Matches(tokenString, pattern);
             tokens = matches.Cast<Match>().Select(match => match.Value).ToList();
             return tokens;
         }
-        public static string InfixToPostfix(List<string> listOfTokens)
+        public static List<string> InfixToPostfix(List<string> listOfTokens)
         {
-            string postfix = string.Empty;
+            List<string> postfix = new List<string>();
             Stack<string> stack = new Stack<string>();
             Queue<string> queueOut = new Queue<string>();
 
             foreach (var token in listOfTokens)
             {
-                if (double.TryParse(token, out var temporatuNumber))
+                if (double.TryParse(token, out double tmpNumber))
                 {
                     queueOut.Enqueue(token);
                 }
-                else if (token == '('.ToString())
+                else if (token == "(")
                 {
                     stack.Push(token);
                 }
-                else if (token == ')'.ToString())
+                else if (token == ")")
                 {
                     string tmpOperator = string.Empty;
                     for (int item = 0; item < stack.Count; item++)
                     {
                         tmpOperator = stack.Pop();
-                        if (tmpOperator == '('.ToString())
+                        if (tmpOperator == "(")
                         {
                             break;
                         }
@@ -53,89 +62,103 @@ namespace RPN
                         }
                     }
                 }
-                else if (char.TryParse(token, out char tmpToken))
+                else if (DictionaryOfOperators.dictionary.ContainsKey(token))
                 {
-                    string tmpOperator = string.Empty;
-                    if (DictionaryOfOperators.dictionary.ContainsKey(tmpToken))
+                    while (true)
                     {
-                        while (true)
+                        string tmpOperator = "0";
+                        if (stack.TryPop(out tmpOperator))
                         {
-                            if (stack.TryPop(out tmpOperator))
+                            if ((DictionaryOfOperators.dictionary[token].IsLeftHanded && DictionaryOfOperators.dictionary[token].Priority <= DictionaryOfOperators.dictionary[tmpOperator].Priority) || (DictionaryOfOperators.dictionary[token].IsLeftHanded == false && DictionaryOfOperators.dictionary[token].Priority < DictionaryOfOperators.dictionary[tmpOperator].Priority))
                             {
-                                if (char.TryParse(tmpOperator, out char tmpCharOperator) && ((DictionaryOfOperators.dictionary[tmpToken].IsLeftHanded && DictionaryOfOperators.dictionary[tmpToken].Priority <= DictionaryOfOperators.dictionary[tmpCharOperator].Priority) || (DictionaryOfOperators.dictionary[tmpToken].IsLeftHanded == false && DictionaryOfOperators.dictionary[tmpToken].Priority < DictionaryOfOperators.dictionary[tmpCharOperator].Priority)))
-                                {
-                                    queueOut.Enqueue(tmpOperator);
-                                }
-                                else
-                                {
-                                    stack.Push(tmpOperator);
-                                    break;
-                                }
+                                queueOut.Enqueue(tmpOperator);
                             }
                             else
                             {
+                                stack.Push(tmpOperator);
                                 break;
                             }
                         }
-                        stack.Push(tmpToken.ToString());
+                        else
+                        {
+                            break;
+                        }
                     }
+                    stack.Push(token);
                 }
             }
-            foreach (var token in stack)
+            int stackCount = stack.Count;
+            for (int i = 0; i < stackCount; i++)
             {
-                queueOut.Enqueue($"{token}");
+                queueOut.Enqueue(stack.Pop());
             }
-            for (int i = 0; i < queueOut.Count; i++)
+            int queueOutCount = queueOut.Count;
+            for (int i = 0; i < queueOutCount; i++)
             {
-                postfix += queueOut.Dequeue() + " ";
+                postfix.Add(queueOut.Dequeue());
             }
-            postfix.Remove(postfix.Length - 1);
 
             return postfix;
         }
-        public static string PostfixToResult(List<string> postfix)
+        public static double PostfixToResult(List<string> postfix)
         {
-            string result = string.Empty;
-            Stack<double> stack = new Stack<double>();
-
-            foreach (var token in postfix)
+            try
             {
-                if (double.TryParse(token, out double tmpNumber))
+                double result = 0;
+                Stack<double> stack = new Stack<double>();
+
+                foreach (var token in postfix)
                 {
-                    stack.Push(tmpNumber);
-                }
-                else if (char.TryParse(token, out char tmpToken))
-                {
-                    if (DictionaryOfOperators.dictionary.ContainsKey(tmpToken))
+                    if (double.TryParse(token, out double tmpNumber))
                     {
+                        stack.Push(tmpNumber);
+                    }
+                    else if (DictionaryOfOperators.dictionary.ContainsKey(token))
+                    {
+                        //double a = stack.Pop();
+                        //double b = stack.Count > 1 ? stack.Pop() : 0;
                         double a = stack.Pop();
                         double b = stack.Pop();
-                        switch (tmpToken)
+                        //  sometimes stack throws exeptiom becouse theres nothing on it
+                        //  for example:
+                        //  4-(-3)
+                        //  it would throw exeption becouse there is nothing behind "-3"
+                        //  but if the calculation is"
+                        //  4-(0-3)
+                        //  it works even if it doesnt meke any sense
+                        //double a = stack.TryPop(out double tmpA) ? tmpA : 0;
+                        //double b = stack.TryPop(out double tmpB) ? tmpB : 0;
+
+                        switch (token)
                         {
-                            case '+':
-                                stack.Push(a + b);
+                            case "+":
+                                stack.Push(b + a);
                                 break;
-                            case '-':
-                                stack.Push(a - b);
+                            case "-":
+                                stack.Push(b - a);
                                 break;
-                            case '*':
-                                stack.Push(a * b);
+                            case "*":
+                                stack.Push(b * a);
                                 break;
-                            case '/':
-                                stack.Push(a / b);
+                            case "/":
+                                stack.Push(b / a);
                                 break;
-                            case '^':
-                                stack.Push(Math.Pow(a, b));
+                            case "^":
+                                stack.Push(Math.Pow(b, a));
                                 break;
                             default:
                                 break;
                         }
                     }
                 }
+                result = stack.Pop();
+                return result;
             }
-            result = stack.Pop().ToString();
-            return result;
+            catch (Exception)
+            {
 
+                throw new Exception("Error, check your calculation");
+            }
         }
     }
 }

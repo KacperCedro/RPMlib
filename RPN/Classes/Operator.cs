@@ -8,11 +8,11 @@ namespace RPN.Classes
 {
     public class Operator
     {
-        public char Sign { get; set; }
+        public string Sign { get; set; }
         public OperatorType TypeOfOperation { get; set; }
         public bool IsLeftHanded { get; set; }
         public int Priority { get; set; }
-        public Operator(char sign, OperatorType typeOfOperation, bool isLeftHanded, int priority)
+        public Operator(string sign, OperatorType typeOfOperation, bool isLeftHanded, int priority)
         {
             Sign = sign;
             TypeOfOperation = typeOfOperation;
