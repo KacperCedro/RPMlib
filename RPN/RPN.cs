@@ -5,31 +5,8 @@ using System.Threading.Tasks.Dataflow;
 
 namespace RPN
 {
-    /*
-     *        12+2×(3×4+10/5)
-     *        
-     *        12 2 3 4 × 10 5 / + × +
-     *        
-     *        40
-     */
     public class RPN
     {
-        public static List<string> SplitToListUsingSpaceBar(string tokenString)
-        {
-            List<string> tokens = new List<string>();
-
-            tokens = tokenString.Split(" ", StringSplitOptions.RemoveEmptyEntries).ToList();
-
-            return tokens;
-        }
-        public static List<string> SplitToListUsingRegex(string tokenString)
-        {
-            List<string> tokens = new List<string>();
-            string pattern = @"([+\-*/()^])|\b\d+(\,\d+)?\b";
-            var matches = Regex.Matches(tokenString, pattern);
-            tokens = matches.Cast<Match>().Select(match => match.Value).ToList();
-            return tokens;
-        }
         public static List<string> InfixToPostfix(List<string> listOfTokens)
         {
             List<string> postfix = new List<string>();
@@ -100,11 +77,11 @@ namespace RPN
 
             return postfix;
         }
-        public static double PostfixToResult(List<string> postfix)
+        public static string PostfixToResult(List<string> postfix)
         {
             try
             {
-                double result = 0;
+                string result = "";
                 Stack<double> stack = new Stack<double>();
 
                 foreach (var token in postfix)
@@ -115,10 +92,13 @@ namespace RPN
                     }
                     else if (DictionaryOfOperators.dictionary.ContainsKey(token))
                     {
+                        double a;
+                        double b;
+                        a = stack.Pop();
+                        b = stack.Pop();
+
                         //double a = stack.Pop();
                         //double b = stack.Count > 1 ? stack.Pop() : 0;
-                        double a = stack.Pop();
-                        double b = stack.Pop();
                         //  sometimes stack throws exeptiom becouse theres nothing on it
                         //  for example:
                         //  4-(-3)
@@ -151,13 +131,13 @@ namespace RPN
                         }
                     }
                 }
-                result = stack.Pop();
+                result = stack.Pop().ToString();
                 return result;
             }
             catch (Exception)
             {
-
-                throw new Exception("Error, check your calculation");
+                //throw new Exception("Error, check your calculation");
+                return "error";
             }
         }
     }

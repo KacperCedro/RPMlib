@@ -23,18 +23,18 @@ namespace ConsoleExample
         static void Calculate()
         {
             string calculation = string.Empty;
-            Console.WriteLine("Add calculation (example: 3*(3-5,4)/(3+0,2)/3^3)-(-3):");
+            Console.WriteLine("Add calculation (example: 3 * ( 3 - 5,4 ) / ( 3 + 0,2 ) / ( 3 ^ 3 ) - ( -3 ):");
             calculation = Console.ReadLine();
             List<string> tokenList = RPN.RPN.SplitToListUsingSpaceBar(calculation);
             foreach (var token in tokenList)
             {
-                Console.WriteLine(token);
+                Console.Write(token + " | ");
             }
             Console.WriteLine();
             List<string> postfix = RPN.RPN.InfixToPostfix(tokenList);
             foreach (var token in postfix)
             {
-                Console.WriteLine(token);
+                Console.Write(token + " | ");
             }
             Console.WriteLine();
             double result = RPN.RPN.PostfixToResult(postfix);
